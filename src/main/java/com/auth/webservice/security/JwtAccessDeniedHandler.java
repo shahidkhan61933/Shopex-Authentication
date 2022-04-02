@@ -8,37 +8,39 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Serializable {
+public class JwtAccessDeniedHandler implements AccessDeniedHandler, Serializable {
 
 	private static final long serialVersionUID = -7858869558953243875L;
 
 	@Override
-	public void commence(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException authException) throws IOException {
-
-		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	public void handle(HttpServletRequest request, HttpServletResponse response,
+			AccessDeniedException accessDeniedException) throws IOException, ServletException {
+		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("message", "Invalid access token");
-        data.put("error", "Full authentication is required to access this resource");
+        data.put("message", "Forbidden user access ");
+        data.put("error", "User attempted to access the protected URL");
         data.put("timestamp", new Date());
-        data.put("status", HttpServletResponse.SC_UNAUTHORIZED);
+        data.put("status", HttpServletResponse.SC_FORBIDDEN);
 
         OutputStream out = response.getOutputStream();
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(out, data);
-        out.flush();
+        out.flush();		
 	}
 }

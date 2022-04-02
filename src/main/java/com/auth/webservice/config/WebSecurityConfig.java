@@ -2,9 +2,10 @@ package com.auth.webservice.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -13,11 +14,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.auth.webservice.security.JwtAccessDeniedHandler;
 import com.auth.webservice.security.JwtAuthenticationEntryPoint;
 import com.auth.webservice.security.JwtRequestFilter;
 import com.auth.webservice.service.impl.JWTUserDetailsService;
 
+@Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter   {
 	
 
@@ -30,6 +34,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter   {
 	@Autowired
 	private JwtRequestFilter jwtRequestFilter;
 	
+	@Autowired
+	private JwtAccessDeniedHandler jwtAccessDeniedHandler;
 	
 	@Bean
 	protected BCryptPasswordEncoder  getPasswordEncoder() {
@@ -44,12 +50,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter   {
     // pre autherization
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests()
-		.antMatchers("/authenticate").permitAll()
+		http.csrf().disable()
+		.authorizeRequests().antMatchers("/authenticate").permitAll()
+		.antMatchers("/api/users/register").permitAll()	
 		.anyRequest().authenticated()
 		.and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint)
+		.and().exceptionHandling().accessDeniedHandler(jwtAccessDeniedHandler)
 		.and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		http.csrf().disable();
+		
 		// add jwt filter 
 		http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 	}
@@ -59,7 +67,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter   {
 		auth.userDetailsService(jwtUserDetailsService)
 		.passwordEncoder(getPasswordEncoder());
 	}
-
+	
 	@Bean
 	@Override
 	public AuthenticationManager authenticationManagerBean() throws Exception {

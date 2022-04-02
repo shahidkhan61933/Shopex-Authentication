@@ -9,6 +9,7 @@ import javax.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +49,7 @@ public class UserController {
 	}
 
 	@GetMapping("/users")
+	@PreAuthorize("hasAuthority('ADMIN')")
 	public List<User> getUsers() {
 		List<User> list = userRepo.findAll();
 		if (list.isEmpty()) {
@@ -59,6 +61,7 @@ public class UserController {
 	}
 
 	@PostMapping("/users")
+	@PreAuthorize("hasAuthority('ADMIN')")
 	public User addUser(@Valid @RequestBody User user) {
 		return userRepo.save(user);
 	}
@@ -69,6 +72,7 @@ public class UserController {
 	}
 	
 	@PutMapping("/users")
+	@PreAuthorize("hasAnyAuthority('VENDOR', 'ADMIN')")
 	public User updateUser(@Valid @RequestBody User user) {
 		return userRepo.save(user);
 	}
